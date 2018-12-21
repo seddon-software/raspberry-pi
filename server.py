@@ -17,11 +17,12 @@ import logging.handlers
 
 def switchOffCheeryPyLogging(cherrypy):
     access_log = cherrypy.log.access_log
-    for handler in tuple(access_log.handlers):
-        access_log.removeHandler(handler)
+#     for handler in tuple(access_log.handlers):
+#         access_log.removeHandler(handler)
+
+data = []
 
 class Root(object):
-        
     def sendHeaders(self, **d):
         code = d["code"] if "code" in d else 200
         mimeType = d["mimeType"] if "mimeType" in d else "html/text"
@@ -34,12 +35,13 @@ class Root(object):
 #         jsonAsString = rawbody.decode("UTF-8")
 #         results = json.loads(jsonAsString)
         results = rawbody.decode()
-        print(results)
+#        print(results)
+        data.append()
         self.sendHeaders()
         return
 
     def do_GET(self, args, kwargs):
-        pass
+        return data
 
     @cherrypy.expose
     def default(self, *args, **kwargs):

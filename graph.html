@@ -1,5 +1,23 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name='viewport' 
+        content='width=device-width, height=device-height, user-scalable=no,
+                 initial-scale=1.0, maximum-scale=1.0, user-scalable=0' />
+  <meta http-equiv="Cache-Control" content="max-age=31536000">
+<link rel="stylesheet" href="client/css/jquery.mobile-1.4.5.css">
+<link rel="stylesheet" href="client/css/jquery-ui-1.12.1.css">
+<link rel="stylesheet" href="client/c3-0.6.5/c3.min.css"/>
+<link rel="stylesheet" href="client/select2-stable-3.5/select2.css"/>
+<script src="client/js/jquery-3.2.1.js"></script>
+<script src="client/js/jquery_cookie.js"></script>
+<script src="client/select2-stable-3.5/select2.js"></script>
+<script src="client/js/jquery-ui-1.12.1.js"></script>
+<script src="client/d3-5.5.0/d3.min.js" charset="utf-8"></script>
+<script src="client/c3-0.6.5/c3.min.js"></script>
+
+
+
 <style>
 
 .line {
@@ -11,17 +29,23 @@
 </style>
 <svg width="960" height="500"></svg>
 <script src="//d3js.org/d3.v4.min.js"></script>
+</head>
 <script>
 
-var n = 40,
-    random = d3.randomNormal(0, .2),
-    data = d3.range(n).map(random);
 
-var svg = d3.select("svg"),
-    margin = {top: 20, right: 20, bottom: 20, left: 40},
-    width = +svg.attr("width") - margin.left - margin.right,
-    height = +svg.attr("height") - margin.top - margin.bottom,
-    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var data3 = [0.0]
+
+var n = 100,
+    random = d3.randomNormal(0, .2),
+    //data = d3.range(n).map(random);
+    //data = d3.range(n).map(0.0);
+    data = new Array(n).fill(0);
+
+var svg = d3.select("svg");
+var margin = {top: 20, right: 20, bottom: 20, left: 40};
+var width = +svg.attr("width") - margin.left - margin.right;
+var height = +svg.attr("height") - margin.top - margin.bottom;
+var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var x = d3.scaleLinear()
     .domain([1, n - 2])
@@ -38,7 +62,7 @@ var line = d3.line()
 
 g.append("defs").append("clipPath")
     .attr("id", "clip")
-  .append("rect")
+    .append("rect")
     .attr("width", width)
     .attr("height", height);
 
@@ -49,11 +73,12 @@ g.append("g")
 
 g.append("g")
     .attr("class", "axis axis--y")
+    .attr("transform", "translate(0," + x(0) + ")")
     .call(d3.axisLeft(y));
 
 g.append("g")
     .attr("clip-path", "url(#clip)")
-  .append("path")
+    .append("path")
     .datum(data)
     .attr("class", "line")
   .transition()
@@ -61,25 +86,45 @@ g.append("g")
     .ease(d3.easeLinear)
     .on("start", tick);
 
+
+function getAjaxData(url, fn) {
+    let a = $.ajax(
+    {
+        url: url,
+        type: 'GET',
+        contentType:'application/json',
+        dataType:'json'
+    });
+    return a;
+}
+
 function tick() {
+    let a = getAjaxData(`/data`);
+    $.when(a).done(function(d) {
+		data3.push(d["device1"])
+    });
 
-  // Push a new data point onto the back.
-  data.push(random());
+    try {
+		d = data3.pop();
+	    data.push(d);
+//	    console.log("****", z, data);
+    } catch(e) {
+	    data.push(0.0);
+    }
 
-  // Redraw the line.
-  d3.select(this)
+    // Redraw the line.
+    d3.select(this)
       .attr("d", line)
       .attr("transform", null);
 
-  // Slide it to the left.
-  d3.active(this)
+    // Slide it to the left.
+    d3.active(this)
       .attr("transform", "translate(" + x(0) + ",0)")
-    .transition()
+      .transition()
       .on("start", tick);
 
-  // Pop the old data point off the front.
-  data.shift();
-
+    // Pop the old data point off the front.
+    data.shift();
 }
 
 </script>

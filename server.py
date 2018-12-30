@@ -23,18 +23,18 @@ class Root(object):
         cherrypy.response.status = code
         cherrypy.response.headers['Content-type'] = mimeType
 
-    def do_POST(self, args, kwargs):
-        global raspberryPiData
-        contentLength = cherrypy.request.headers['Content-Length']
-        rawbody = cherrypy.request.body.read(int(contentLength))
-        results = rawbody.decode()
-#        data.append()
+    def do_POST(self):
         def updateData():
             try:
                 device, value = results.split(":")
                 raspberryPiData[int(device)] = value
             except:
                 print("***", results)
+
+        global raspberryPiData
+        contentLength = cherrypy.request.headers['Content-Length']
+        rawbody = cherrypy.request.body.read(int(contentLength))
+        results = rawbody.decode()
         updateData()
         self.sendHeaders()
         return
@@ -63,7 +63,7 @@ class Root(object):
                 self.sendHeaders(mimeType=mimeType)
                 f = open(fileName, "r", encoding="UTF-8")
                 data = f.read()
-                return data  #.encode("UTF-8")
+                return data
             except:
                 self.sendHeaders(code=404)
 
@@ -71,18 +71,9 @@ class Root(object):
         fileName, _ = parseInputUrl()
         if(fileName == "data"):
             self.sendHeaders(mimeType="application/json")
-            global n
-            if n == 10:
-                n = -10
-            else:
-                n += 1
             d1 = raspberryPiData[1]
             d2 = raspberryPiData[2]
             d3 = raspberryPiData[3]
-            s = math.sin(n/18.0)
-            c = math.cos(n/18.0)
-#             d2 = s + c - 1.5
-#             d3 = s**2 - c**2 + s + 0.5
             data = {"device1":d1, "device2":d2, "device3":d3, "device4":d3+d2}
             data = json.dumps(data)
             return data
@@ -96,7 +87,7 @@ class Root(object):
             z = self.do_GET(args, kwargs)
             return z.encode()
         if method == "POST": 
-            self.do_POST(args, kwargs)
+            self.do_POST()
 
 SERVER = "0.0.0.0"
 

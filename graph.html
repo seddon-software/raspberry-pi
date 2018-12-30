@@ -15,6 +15,7 @@
 <script src="client/js/jquery-ui-1.12.1.js"></script>
 <script src="client/d3-5.5.0/d3.min.js" charset="utf-8"></script>
 <script src="client/c3-0.6.5/c3.min.js"></script>
+<!-- <script src="//d3js.org/d3.v4.min.js"></script>  -->
 
 
 
@@ -27,65 +28,82 @@
 }
 
 </style>
-<svg width="960" height="500"></svg>
-<script src="//d3js.org/d3.v4.min.js"></script>
+
 </head>
+
+<body>
+</body>
+
 <script>
 
+var svgWidth = 960;
+var svgHeight = 200;
 
-var data3 = [0.0]
-
-var n = 100,
-    random = d3.randomNormal(0, .2),
-    //data = d3.range(n).map(random);
-    //data = d3.range(n).map(0.0);
-    data = new Array(n).fill(0);
-
-var svg = d3.select("svg");
 var margin = {top: 20, right: 20, bottom: 20, left: 40};
-var width = +svg.attr("width") - margin.left - margin.right;
-var height = +svg.attr("height") - margin.top - margin.bottom;
-var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var width = svgWidth - margin.left - margin.right;
+var height = svgHeight - margin.top - margin.bottom;
 
-var x = d3.scaleLinear()
-    .domain([1, n - 2])
-    .range([0, width]);
+var dataPoints = 100;
+var numberOfDevices = 4;
+var piData = {};
+var historicalData = {};
+var graphSetups = [];
+var graphs = {};
 
-var y = d3.scaleLinear()
-    .domain([-1, 1])
-    .range([height, 0]);
+function setupDOM() {
+	for(let i = 1; i <= numberOfDevices; i++) {
+		let html = `<svg id="svg${i}" width=${svgWidth} height=${svgHeight}></svg>`
+		$("body").append(html);
+	}
+}
 
-var line = d3.line()
-    .curve(d3.curveBasis)
-    .x(function(d, i) { return x(i); })
-    .y(function(d, i) { return y(d); });
-
-g.append("defs").append("clipPath")
-    .attr("id", "clip")
-    .append("rect")
-    .attr("width", width)
-    .attr("height", height);
-
-g.append("g")
-    .attr("class", "axis axis--x")
-    .attr("transform", "translate(0," + y(0) + ")")
-    .call(d3.axisBottom(x));
-
-g.append("g")
-    .attr("class", "axis axis--y")
-    .attr("transform", "translate(0," + x(0) + ")")
-    .call(d3.axisLeft(y));
-
-g.append("g")
-    .attr("clip-path", "url(#clip)")
-    .append("path")
-    .datum(data)
-    .attr("class", "line")
-  .transition()
-    .duration(500)
-    .ease(d3.easeLinear)
-    .on("start", tick);
-
+function setup(id, fn) {
+	let selector = `#svg${id}`
+	var svg = d3.select(selector);
+	var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	
+	var x = d3.scaleLinear()
+	    .domain([1, dataPoints - 2])
+	    .range([0, width]);
+	
+	var y = d3.scaleLinear()
+	    .domain([0, 10])
+	    .range([height, 0]);
+	
+	let line = d3.line()
+	    .curve(d3.curveBasis)
+	    .x(function(d, i) { return x(i); })
+	    .y(function(d, i) { return y(d); });
+	
+	g.append("defs").append("clipPath")
+	    .attr("id", `clip${id}`)
+	    .append("rect")
+	    .attr("width", width)
+	    .attr("height", height);
+	
+	g.append("g")
+	    .attr("class", "axis axis--x")
+	    .attr("transform", "translate(0," + y(0) + ")")
+	    .call(d3.axisBottom(x));
+	
+	g.append("g")
+	    .attr("class", "axis axis--y")
+	    .attr("transform", "translate(0," + x(0) + ")")
+	    .call(d3.axisLeft(y));
+	
+	data = historicalData[`device${id}`];
+	g.append("g")
+	    .attr("clip-path", `url(#clip${id})`)
+	    .append("path")
+	    .datum(historicalData[`device${id}`])
+	    .attr("class", "line")
+	    .attr("id", `device${id}`)
+	    .transition()
+	    .duration(500)
+	    .ease(d3.easeLinear)
+	    .on("start", fn);
+	return {[`device${id}`]:{'line':line, 'x':x, 'y':y}};
+}
 
 function getAjaxData(url, fn) {
     let a = $.ajax(
@@ -99,21 +117,22 @@ function getAjaxData(url, fn) {
 }
 
 function tick() {
+	// determine essential variables
+	var id = $(this).attr("id");
+	let graph = graphs[id]
+    let line = graph['line'];
+ 	let x = graph['x'];
+	let y = graph['y'];
+
+	// download data from server
     let a = getAjaxData(`/data`);
-    $.when(a).done(function(d) {
-		data3.push(d["device1"])
+    $.when(a).done(function(downloadedData) {
+		historicalData[id].push(downloadedData[id]);
     });
 
-    try {
-		d = data3.pop();
-	    data.push(d);
-//	    console.log("****", z, data);
-    } catch(e) {
-	    data.push(0.0);
-    }
-
     // Redraw the line.
-    d3.select(this)
+	
+ 	d3.select(this)
       .attr("d", line)
       .attr("transform", null);
 
@@ -124,7 +143,22 @@ function tick() {
       .on("start", tick);
 
     // Pop the old data point off the front.
-    data.shift();
+    historicalData[id].shift();
 }
+
+// main program
+
+setupDOM();
+
+for(let i = 1; i <= numberOfDevices; i++) {
+	piData[`device${i}`] = [0.0];
+	historicalData[`device${i}`] = new Array(dataPoints).fill(0);
+	graphSetups.push(setup(i, tick));
+}
+
+for(let i = 0; i < numberOfDevices; i++) {
+	graphs = {...graphs, ...graphSetups[i]};
+}
+
 
 </script>

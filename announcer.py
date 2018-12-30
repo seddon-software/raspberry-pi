@@ -7,8 +7,15 @@ s.bind(('', 0))
 s.setsockopt(SOL_SOCKET, SO_BROADCAST, 1) #this is a broadcast socket
 my_ip= gethostbyname(gethostname()) #get our IP. Be careful if you have multiple network interfaces or IPs
 
-while 1:
-    data = f"{MAGIC}{my_ip}:{PORT}"
-    s.sendto(data.encode(), ('<broadcast>', PORT))
-    sleep(5)
+def broadcastServerAddress():
+    while 1:
+        data = f"{MAGIC}:{my_ip}:{PORT}"
+        s.sendto(data.encode(), ('<broadcast>', PORT))
+        sleep(5)
+
+from threading import Thread
+Thread(target=broadcastServerAddress).start()
+
+
+
     

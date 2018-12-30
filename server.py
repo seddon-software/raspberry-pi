@@ -1,27 +1,20 @@
 import cherrypy
 import json
-from cherrypy.process.plugins import Daemonizer
-
+import math
 import datetime
-import ssl
-import sys
-import random
-import hashlib
-import string
-from functools import partial
-import urllib.parse
-import uuid
-import re
 import logging.handlers
-
+import socket
+import announcer
+from constants import PORT
 
 def switchOffCheeryPyLogging(cherrypy):
     access_log = cherrypy.log.access_log
-#     for handler in tuple(access_log.handlers):
-#         access_log.removeHandler(handler)
+    for handler in tuple(access_log.handlers):
+        access_log.removeHandler(handler)
 
 data = []
 n = 0
+raspberryPiData = [0, 0, 0, 0]
 
 class Root(object):
     def sendHeaders(self, **d):
@@ -30,14 +23,19 @@ class Root(object):
         cherrypy.response.status = code
         cherrypy.response.headers['Content-type'] = mimeType
 
-    def do_POST(self):
+    def do_POST(self, args, kwargs):
+        global raspberryPiData
         contentLength = cherrypy.request.headers['Content-Length']
         rawbody = cherrypy.request.body.read(int(contentLength))
-#         jsonAsString = rawbody.decode("UTF-8")
-#         results = json.loads(jsonAsString)
         results = rawbody.decode()
-#        print(results)
-        data.append()
+#        data.append()
+        def updateData():
+            try:
+                device, value = results.split(":")
+                raspberryPiData[int(device)] = value
+            except:
+                print("***", results)
+        updateData()
         self.sendHeaders()
         return
 
@@ -78,7 +76,14 @@ class Root(object):
                 n = -10
             else:
                 n += 1
-            data = {"device1":n/10}
+            d1 = raspberryPiData[1]
+            d2 = raspberryPiData[2]
+            d3 = raspberryPiData[3]
+            s = math.sin(n/18.0)
+            c = math.cos(n/18.0)
+#             d2 = s + c - 1.5
+#             d3 = s**2 - c**2 + s + 0.5
+            data = {"device1":d1, "device2":d2, "device3":d3, "device4":d3+d2}
             data = json.dumps(data)
             return data
         else:                                           
@@ -91,9 +96,8 @@ class Root(object):
             z = self.do_GET(args, kwargs)
             return z.encode()
         if method == "POST": 
-            self.do_POST()
+            self.do_POST(args, kwargs)
 
-PORT = 5559
 SERVER = "0.0.0.0"
 
 # d = Daemonizer(cherrypy.engine)
@@ -128,7 +132,7 @@ my_logger = setupLogging()
 my_logger.debug("server started at {}".format(datetime.datetime.now()))
 
 
-print("cherrypy server:", SERVER)
+print("cherrypy server:", socket.gethostbyname(socket.gethostname()))
 print("port:", PORT)
 print("")
 cherrypy.quickstart(Root(), '/')

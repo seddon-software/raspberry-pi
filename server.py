@@ -14,7 +14,9 @@ def switchOffCheeryPyLogging(cherrypy):
 
 data = []
 n = 0
-raspberryPiData = [0, 0, 0, 0]
+raspberryPiData = None
+raspberryPiInfo = None
+numberOfDevices = None
 
 class Root(object):
     def sendHeaders(self, **d):
@@ -23,20 +25,39 @@ class Root(object):
         cherrypy.response.status = code
         cherrypy.response.headers['Content-type'] = mimeType
 
-    def do_POST(self):
+    def do_POST(self, args, kwargs):
+        def setupDataStructures():
+            global raspberryPiData
+            global raspberryPiInfo
+            global numberOfDevices
+            numberOfDevices = len(results)
+            raspberryPiData = [0.0] * (numberOfDevices+1)
+            raspberryPiInfo = results
+
         def updateData():
+            global raspberryPiData
+            global raspberryPiInfo
             try:
                 device, value = results.split(":")
                 raspberryPiData[int(device)] = value
             except:
                 print("***", results)
 
-        global raspberryPiData
+        if args:
+            fileName = args[0]
+        else:
+            fileName = ""
         contentLength = cherrypy.request.headers['Content-Length']
         rawbody = cherrypy.request.body.read(int(contentLength))
         results = rawbody.decode()
-        updateData()
+
+        if fileName == "init":
+            print(results)
+            setupDataStructures()
+        else:
+            updateData()
         self.sendHeaders()
+        
         return
 
     def do_GET(self, args, kwargs):
@@ -69,26 +90,40 @@ class Root(object):
 
 
         fileName, _ = parseInputUrl()
-        if(fileName == "data"):
+        if(fileName == "init"):
             self.sendHeaders(mimeType="application/json")
-            d1 = raspberryPiData[1]
-            d2 = raspberryPiData[2]
-            d3 = raspberryPiData[3]
-            data = {"device1":d1, "device2":d2, "device3":d3, "device4":d3+d2}
+            data = json.dumps(raspberryPiInfo)
+            return data
+        elif(fileName == "data"):
+            self.sendHeaders(mimeType="application/json")
+            data = {}
+            for n in range(1, numberOfDevices):
+                data[f"device{n}"] = raspberryPiData[n]
+#                 d1 = raspberryPiData[1]
+#                 d2 = raspberryPiData[2]
+#                 d3 = raspberryPiData[3]
+#                 d4 = raspberryPiData[4]
+#                 d5 = raspberryPiData[5]
+#                 data = {"device1":d1, "device2":d2, "device3":d3, "device4":d4, "device5":d5}
             data = json.dumps(data)
             return data
+        elif(fileName == "init"):
+            pass
         else:                                           
             return doSendRegularFiles(fileName)
 
     @cherrypy.expose
     def default(self, *args, **kwargs):
-        method = cherrypy.request.method
-        if method == "GET": 
-            z = self.do_GET(args, kwargs)
-            return z.encode()
-        if method == "POST": 
-            self.do_POST()
-
+        try:
+            method = cherrypy.request.method
+            if method == "GET": 
+                z = self.do_GET(args, kwargs)
+                return z.encode()
+            if method == "POST": 
+                self.do_POST(args, kwargs)
+        except Exception as e:
+            print("*** Error:", e)
+            
 SERVER = "0.0.0.0"
 
 # d = Daemonizer(cherrypy.engine)

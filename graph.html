@@ -24,38 +24,43 @@
 
 <script>
 
-var svgWidth = 960;
-var svgHeight = 200;
+//var svgWidth = 960;
+var svgWidth = $(window).width();
+var svgHeight = $(window).width()/6.0;
 
 var margin = {top: 20, right: 20, bottom: 20, left: 40};
 var width = svgWidth - margin.left - margin.right;
 var height = svgHeight - margin.top - margin.bottom;
 
 var dataPoints = 100;
-var numberOfDevices = 4;
 var piData = {};
 var historicalData = {};
 var graphSetups = [];
 var graphs = {};
 
-function setupDOM() {
+function setupDOM(numberOfDevices) {
 	for(let i = 1; i <= numberOfDevices; i++) {
-		let html = `<svg id="svg${i}" width=${svgWidth} height=${svgHeight}></svg>`
+		let html = $(`<svg id="svg${i}" width=${svgWidth} height=${svgHeight}></svg>`);
 		$("body").append(html);
 	}
 }
 
-function setup(id, fn) {
-	let selector = `#svg${id}`
-	var svg = d3.select(selector);
-	var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+function setup(id, fn, minValue, maxValue, title) {
+	let svg = d3.select(`#svg${id}`);
+	let color = (id % 2 == 0) ? "antiquewhite" : "lightyellow";
+	svg.append("rect")
+    	.attr("width", "100%")
+    	.attr("height", "100%")
+    	.attr("fill", color);
 	
-	var x = d3.scaleLinear()
+	let g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	
+	let x = d3.scaleLinear()
 	    .domain([1, dataPoints - 2])
 	    .range([0, width]);
 	
-	var y = d3.scaleLinear()
-	    .domain([0, 10])
+	let y = d3.scaleLinear()
+	    .domain([minValue, maxValue])
 	    .range([height, 0]);
 	
 	let line = d3.line()
@@ -78,8 +83,14 @@ function setup(id, fn) {
 	    .attr("class", "axis axis--y")
 	    .attr("transform", "translate(0," + x(0) + ")")
 	    .call(d3.axisLeft(y));
-	
-	data = historicalData[`device${id}`];
+
+	g.append("text")
+	    .attr("class", "title")
+	    .attr("x", svgWidth/2)
+	    .attr("y", margin.top)
+	    .attr("text-anchor", "middle")
+	    .text(title);
+
 	g.append("g")
 	    .attr("clip-path", `url(#clip${id})`)
 	    .append("path")
@@ -136,17 +147,27 @@ function tick() {
 
 // main program
 
-setupDOM();
+let a = getAjaxData(`/init`); // download initial data from server
+$.when(a).done(function(downloadedData) {
+	deviceInfo = JSON.parse(downloadedData);
+	
+	// setup DOM
+	let numberOfDevices = deviceInfo.length;
+    setupDOM(numberOfDevices);
 
-for(let i = 1; i <= numberOfDevices; i++) {
-	piData[`device${i}`] = [0.0];
-	historicalData[`device${i}`] = new Array(dataPoints).fill(0);
-	graphSetups.push(setup(i, tick));
-}
+	// setup data structures
+    for(let i = 1; i <= numberOfDevices; i++) {
+    	piData[`device${i}`] = [0.0];
+    	historicalData[`device${i}`] = new Array(dataPoints).fill(0);
+    	let device = deviceInfo[i-1][[`device${i}`]];
+    	graphSetups.push(setup(i, tick, device["min"], device["max"], device["name"]));
+    }
 
-for(let i = 0; i < numberOfDevices; i++) {
-	graphs = {...graphs, ...graphSetups[i]};
-}
+    for(let i = 0; i < numberOfDevices; i++) {
+    	graphs = {...graphs, ...graphSetups[i]};
+    }    
+});
+
 
 
 </script>

@@ -15,6 +15,7 @@
 import random
 import time
 import http.client
+import json
 from threading import Thread, Lock
 from discoverer import getServerUrl, startDiscoverer
 
@@ -31,12 +32,16 @@ def f2(device, n):
 def f3(device, n):
     return f"{device}:{n%3}"
 
+def f4(device, n):
+    return f"{device}:{n%7}"
+
+def f5(device, n):
+    return f"{device}:{n%21}"
+
 def myfunc(device, lock, fn):
     for n in range(1000):
-        lock.acquire()        
-        connection = http.client.HTTPConnection(url)
-        connection.request(method="POST", url="/", body=fn(device, n))
-        connection.close()
+        lock.acquire()
+        requests.post(f"http://{url}", data=fn(device, n))
         lock.release()    
         time.sleep(random.random() * 0.1)
         time.sleep(1)
@@ -53,24 +58,47 @@ while True:
     time.sleep(5)
 print(f"... server located: {url}")
 
-# POST info to server
-connection = http.client.HTTPConnection(url)
-connection.request(method="POST", url="/info", body="devices:3")
-connection.close()
+# POST init data to server
+import requests
 
-print("Starting GPIO simulator")
+#connection = http.client.HTTPConnection(url)
+headers = {'Content-type': 'application/json'}
+body = [{"device1":{"name":"pressure", "min":0.0, "max":10.0}}, 
+        {"device2":{"name":"temperature", "min":0.0, "max": 5.0}}, 
+        {"device3":{"name":"height", "min":0.0, "max": 3.0}}, 
+        {"device4":{"name":"width", "min":0.0, "max": 8.0}}, 
+        {"device5":{"name":"length", "min":0.0, "max":24.0}}]
+
+r = requests.post(f"http://{url}/init", json=body)
+
+
 # start simulated devices (one thread per device)
-thread1 = Thread(target=myfunc, args=("1", theLock, f1))
-thread2 = Thread(target=myfunc, args=("2", theLock, f2))
-thread3 = Thread(target=myfunc, args=("3", theLock, f3))
+print("Starting GPIO simulator")
 
-thread1.start()
-thread2.start()
-thread3.start()
+threads = []
+for n in range(1, 6):
+    thread = Thread(target=myfunc, args=(f"{n}", theLock, globals()[f"f{n}"]))
+    threads.append(thread)
+    thread.start()
+
+for n in range(1, 6):
+    threads[n-1].join()
+# thread2 = Thread(target=myfunc, args=("2", theLock, f2))
+# thread3 = Thread(target=myfunc, args=("3", theLock, f3))
+# thread4 = Thread(target=myfunc, args=("4", theLock, f4))
+# thread5 = Thread(target=myfunc, args=("5", theLock, f5))
+# 
+# thread1.start()
+# thread2.start()
+# thread3.start()
+# thread4.start()
+# thread5.start()
  
 thread1.join()
 thread2.join()
 thread3.join()
+thread4.join()
+thread5.join()
  
 print("\nRaspberry Pi terminating") 
  

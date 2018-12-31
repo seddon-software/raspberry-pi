@@ -1,4 +1,4 @@
-from socket import socket, AF_INET, SOCK_DGRAM
+from socket import socket, AF_INET, SOCK_DGRAM, SHUT_RDWR
 from threading import Thread
 from constants import MAGIC, PORT
 
@@ -18,6 +18,8 @@ def receiveServerAnnouncement():
         if data.startswith(MAGIC):
             _, SERVER_IP, SERVER_PORT = data.split(":")
             url = f"{SERVER_IP}:{SERVER_PORT}"
+            s.close()
+            break
 
 def startDiscoverer():
     Thread(target=receiveServerAnnouncement).start()

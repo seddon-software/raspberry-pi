@@ -27,3 +27,24 @@ Operation
 		http://localhost:5559/graph.html
 	At present I am assuming the raspberry pi is sending data in the range 0 to 10.  It is fairly 
 	simple to allow different ranges.
+
+To Install Python on Raspberry Pi:
+	
+1. Download Python-3.6.1.tar.xz from https://www.python.org/
+
+2. Unzip the file and then use the commands:
+	./configure
+	make
+	make test
+	sudo make install
+This will install Python 3.6 but pip3 may not be working.
+
+3. Install necessary modules using:
+	sudo apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
+
+4. Configure pip:
+	sudo make
+	sudo make install
+
+5. Now you should be able to use pip, e.g.:
+	sudo pip3 install numpy

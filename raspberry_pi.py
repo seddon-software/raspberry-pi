@@ -15,17 +15,15 @@
 import random
 import time
 import requests
-#import http.client
-#import json
 from threading import Thread, Lock
 from discoverer import getServerUrl, startDiscoverer
 
 theLock = Lock()
 
 def f1(device, n):
-    n = n % 10
-    n += random.random()
-    return f"{device}:{n}"
+    m = n % 10
+    m -= random.random() * 5
+    return f"{device}:{m}"
 
 def f2(device, n):
     return f"{device}:{n%5}"
@@ -60,13 +58,8 @@ while True:
 print(f"... server located: {url}")
 
 
-
-
-#connection = http.client.HTTPConnection(url)
-#headers = {'Content-type': 'application/json'}
-
 # POST init data to server
-body = [{"device1":{"name":"pressure", "min":0.0, "max":10.0}}, 
+body = [{"device1":{"name":"pressure", "min":-5.0, "max":10.0}}, 
         {"device2":{"name":"temperature", "min":0.0, "max": 5.0}}, 
         {"device3":{"name":"height", "min":0.0, "max": 3.0}}, 
         {"device4":{"name":"width", "min":0.0, "max": 8.0}}, 

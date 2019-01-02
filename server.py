@@ -5,6 +5,7 @@ import datetime
 import logging.handlers
 import socket
 import announcer
+
 from constants import PORT
 
 def switchOffCheeryPyLogging(cherrypy):
@@ -12,6 +13,7 @@ def switchOffCheeryPyLogging(cherrypy):
     for handler in tuple(access_log.handlers):
         access_log.removeHandler(handler)
 
+debug = False
 data = []
 n = 0
 raspberryPiData = None
@@ -41,8 +43,9 @@ class Root(object):
                 device, value = results.split(":")
                 raspberryPiData[int(device)] = value
             except:
-                print("***", results)
-
+                if debug:
+                    print("*** Error:", results)
+            
         if args:
             fileName = args[0]
         else:
@@ -52,7 +55,6 @@ class Root(object):
         results = rawbody.decode()
 
         if fileName == "init":
-            print(results)
             setupDataStructures()
         else:
             updateData()
@@ -99,12 +101,6 @@ class Root(object):
             data = {}
             for n in range(1, numberOfDevices):
                 data[f"device{n}"] = raspberryPiData[n]
-#                 d1 = raspberryPiData[1]
-#                 d2 = raspberryPiData[2]
-#                 d3 = raspberryPiData[3]
-#                 d4 = raspberryPiData[4]
-#                 d5 = raspberryPiData[5]
-#                 data = {"device1":d1, "device2":d2, "device3":d3, "device4":d4, "device5":d5}
             data = json.dumps(data)
             return data
         elif(fileName == "init"):
@@ -122,7 +118,8 @@ class Root(object):
             if method == "POST": 
                 self.do_POST(args, kwargs)
         except Exception as e:
-            print("*** Error:", e)
+            if debug:
+                print("*** Error:", e)
             
 SERVER = "0.0.0.0"
 

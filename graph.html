@@ -32,6 +32,7 @@ var margin = {top: 20, right: 20, bottom: 20, left: 40};
 var width = svgWidth - margin.left - margin.right;
 var height = svgHeight - margin.top - margin.bottom;
 
+var frameTime = 500;	// msec
 var dataPoints = 100;
 var piData = {};
 var historicalData = {};
@@ -98,7 +99,7 @@ function setup(id, fn, minValue, maxValue, title) {
 	    .attr("class", "line")
 	    .attr("id", `device${id}`)
 	    .transition()
-	    .duration(500)
+	    .duration(frameTime)
 	    .ease(d3.easeLinear)
 	    .on("start", fn);
 	return {[`device${id}`]:{'line':line, 'x':x, 'y':y}};

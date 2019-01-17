@@ -172,7 +172,8 @@ my_logger = setupLogging()
 my_logger.debug("server started at {}".format(datetime.datetime.now()))
 
 
-print("cherrypy server:", socket.gethostbyname(socket.gethostname()))
+# print("cherrypy server:", socket.gethostbyname(socket.gethostname()))
+print(f"cherrypy server: {SERVER}")
 print("port:", PORT)
 print("")
 cherrypy.quickstart(Root(), '/')

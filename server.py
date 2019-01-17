@@ -134,7 +134,6 @@ def get_ip():
         s.close()
     return IP
 
-# SERVER = "0.0.0.0"
 SERVER = get_ip()
 
 if daemon:

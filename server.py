@@ -158,7 +158,7 @@ def setupLogging():
 
     # Set up a specific logger with our desired output level
     my_logger = logging.getLogger('MyLogger')
-    my_logger.setLevel(logging.DEBUG)
+    my_logger.setLevel(logging.INFO)
     
     # Add the log message handler to the logger
     handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=1000000, backupCount=10)
@@ -169,7 +169,9 @@ def setupLogging():
 
 switchOffCheeryPyLogging(cherrypy)
 my_logger = setupLogging()
-my_logger.debug("server started at {}".format(datetime.datetime.now()))
+my_logger.info("server started at {}".format(datetime.datetime.now()))
+my_logger.info(f"cherrypy server: {SERVER}")
+my_logger.info(f"port: {PORT}")
 
 
 # print("cherrypy server:", socket.gethostbyname(socket.gethostname()))

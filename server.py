@@ -1,3 +1,4 @@
+daemon = True
 import cherrypy
 import json
 import math
@@ -123,8 +124,11 @@ class Root(object):
             
 SERVER = "0.0.0.0"
 
-# d = Daemonizer(cherrypy.engine)
-# d.subscribe()
+if daemon:
+    from cherrypy.process.plugins import Daemonizer
+    d = Daemonizer(cherrypy.engine)
+    d.subscribe()
+    
 cherrypy.config.update(
     { 'server.socket_port': PORT,
       'engine.autoreload.on' : False,

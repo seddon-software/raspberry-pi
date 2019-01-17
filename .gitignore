@@ -3,6 +3,8 @@
 COPY
 LOGIN
 __pycache__
+log
+
 
 
 

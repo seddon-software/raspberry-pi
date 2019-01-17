@@ -28,7 +28,8 @@ Operation
 	At present I am assuming the raspberry pi is sending data in the range 0 to 10.  It is fairly 
 	simple to allow different ranges.
 
-To Install Python on Raspberry Pi:
+To Install Python on Raspberry Pi
+=================================
 	
 1. Download Python-3.6.1.tar.xz from https://www.python.org/
 
@@ -48,3 +49,16 @@ This will install Python 3.6 but pip3 may not be working.
 
 5. Now you should be able to use pip, e.g.:
 	sudo pip3 install numpy
+
+To run server.py and raspberry_pi.py at boot on the pi
+======================================================
+
+1. Edit /etc/rc.local and add the following lines:
+	sudo /usr/local/bin/python /home/pi/p/server.py &
+	sudo /usr/local/bin/python /home/pi/p/raspberry_pi.py &
+	
+where /usr/local/bin/python is the pyhon being used and /home/pi/p is the directory with our software installed
+
+2. If there are errors on boot, you can see the boot log with:
+	systemctl status rc.local.service
+	

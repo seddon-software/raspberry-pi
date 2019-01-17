@@ -1,4 +1,4 @@
-daemon = True
+daemon = False
 import cherrypy
 import json
 import math

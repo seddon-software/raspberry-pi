@@ -3,7 +3,7 @@ from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST, gethos
 from constants import MAGIC, PORT
 
 def get_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s = socket(AF_INET, SOCK_DGRAM)
     try:
         # doesn't even have to be reachable
         s.connect(('10.255.255.255', 1))

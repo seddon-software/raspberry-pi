@@ -134,7 +134,6 @@ def get_ip():
         s.close()
     return IP
 
-print(get_ip())
 # SERVER = "0.0.0.0"
 SERVER = get_ip()
 
